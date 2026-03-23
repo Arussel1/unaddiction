@@ -1,0 +1,16 @@
+{
+  "name": "socialfine",
+  "version": "1.2.6",
+  "description": "Curb social media addiction with $1 CAD fines",
+  "private": true,
+  "scripts": {
+    "test": "jest --verbose",
+    "setup-auth": "node config-gen.js",
+    "build": "zip -r socialfine.xpi . -x \"node_modules/*\" \"tests/*\" \".git/*\" \".env*\" \"package*\" \"jest*\" \"config-gen.js\" \"README.md\" \"socialfine.xpi\" \"source.zip\"",
+    "package-source": "zip -r source.zip . -x \"node_modules/*\" \".git/*\" \"*/.env*\" \".env*\" \"socialfine.xpi\" \"source.zip\""
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "dotenv": "^16.4.5"
+  }
+}

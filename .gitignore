@@ -1,0 +1,21 @@
+# Secrets
+.env
+.env.local
+firebase-config.js
+
+# Dependency directories
+node_modules/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build file
+*.xpi
+*.zip

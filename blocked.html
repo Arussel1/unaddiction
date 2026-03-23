@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SocialFine — Blocked</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      padding: 3rem 2rem;
+      max-width: 520px;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: shake 0.5s ease-in-out 0.6s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ff6b6b, #ffa500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .fine-badge {
+      display: inline-block;
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.4);
+      border-radius: 999px;
+      padding: 0.4rem 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ff6b6b;
+      margin: 1rem 0;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.3); }
+      50%      { box-shadow: 0 0 0 12px rgba(255,107,107,0); }
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #aaa;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
+    }
+
+    .skull {
+      position: fixed;
+      font-size: 1.4rem;
+      opacity: 0.06;
+      animation: float 8s infinite linear;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      0%   { transform: translateY(100vh) rotate(0deg); }
+      100% { transform: translateY(-10vh) rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient floating skulls -->
+  <span class="skull" style="left:10%; animation-delay:0s;">💀</span>
+  <span class="skull" style="left:30%; animation-delay:2s;">💸</span>
+  <span class="skull" style="left:55%; animation-delay:4s;">🔥</span>
+  <span class="skull" style="left:75%; animation-delay:1s;">💀</span>
+  <span class="skull" style="left:90%; animation-delay:3s;">💸</span>
+
+  <div class="container">
+    <div class="icon">🚫</div>
+    <h1>You Just Got Fined.</h1>
+    <div class="fine-badge">− $1 CAD from your budget</div>
+    <p>
+      That social media visit just cost you <strong>$1&nbsp;CAD</strong>.
+      Your remaining monthly budget has been reduced. Maybe it's time
+      to get back to something productive?
+    </p>
+    <a id="redirectBtn" class="btn" href="https://www.google.com">Go Be Productive →</a>
+  </div>
+
+  <script src="blocked.js"></script>
+</body>
+</html>

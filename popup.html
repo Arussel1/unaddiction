@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SocialFine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- ─── Header ─────────────────────────────────── -->
+  <header>
+    <div class="logo">🔥 SocialFine</div>
+    <div class="month-label" id="monthLabel"></div>
+  </header>
+
+  <!-- ─── Budget Card ────────────────────────────── -->
+  <section class="budget-card" id="budgetCard">
+    <div class="budget-label">Remaining Budget</div>
+    <div class="budget-value" id="budgetValue">—</div>
+    <div class="budget-subtext" id="budgetSubtext"></div>
+  </section>
+
+  <!-- ─── Stats Row ──────────────────────────────── -->
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-value" id="violationCount">0</span>
+      <span class="stat-label">Violations</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="totalFine">$0</span>
+      <span class="stat-label">Total Fined</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="allowanceDisplay">$50</span>
+      <span class="stat-label">Allowance</span>
+    </div>
+  </div>
+
+  <!-- ─── Time Tracker ───────────────────────────── -->
+  <div class="time-tracker" id="timeTracker">
+    <div class="time-bar-container">
+      <div class="time-bar" id="timeBar"></div>
+    </div>
+    <div class="time-label" id="timeLabel">0 / 5 min free today</div>
+  </div>
+
+  <!-- ─── Last Violation ─────────────────────────── -->
+  <div class="last-violation" id="lastViolation">
+    No violations yet 🎉
+  </div>
+
+  <!-- ─── Device ID & QR ─────────────────────────── -->
+  <div class="device-section">
+    <div class="device-id-row">
+      <span class="device-label">Device ID</span>
+      <span class="device-value" id="deviceId">—</span>
+      <button class="copy-btn" id="copyBtn" title="Copy ID">📋</button>
+    </div>
+    <div class="qr-container" id="qrContainer">
+      <canvas id="qrCanvas"></canvas>
+      <div class="qr-hint">Scan to view on mobile</div>
+    </div>
+  </div>
+
+  <!-- ─── Blacklist Manager ──────────────────────── -->
+  <details class="settings-panel" id="blacklistPanel">
+    <summary>🚫 Blocked Sites</summary>
+    <div class="settings-body">
+      <div class="blacklist-list" id="blacklistList"></div>
+      <div class="settings-input-row" style="margin-top: 8px;">
+        <input
+          type="text"
+          id="addDomainInput"
+          placeholder="e.g. youtube.com"
+        />
+        <button class="save-btn" id="addDomainBtn">+ Add</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- ─── Settings ───────────────────────────────── -->
+  <details class="settings-panel">
+    <summary>⚙️ Settings</summary>
+    <div class="settings-body">
+      <label class="settings-label" for="allowanceInput">
+        Monthly Allowance (CAD)
+      </label>
+      <div class="settings-input-row">
+        <span class="dollar-sign">$</span>
+        <input
+          type="number"
+          id="allowanceInput"
+          min="1"
+          step="1"
+          placeholder="50"
+        />
+        <button class="save-btn" id="saveAllowance">Save</button>
+      </div>
+
+      <label class="settings-label" for="freeMinutesInput" style="margin-top: 12px;">
+        Daily Free Browsing (minutes)
+      </label>
+      <div class="settings-input-row">
+        <span class="dollar-sign">⏱</span>
+        <input
+          type="number"
+          id="freeMinutesInput"
+          min="0"
+          step="1"
+          placeholder="5"
+        />
+        <button class="save-btn" id="saveFreeMinutes">Save</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- ─── Actions ────────────────────────────────── -->
+  <div class="actions">
+    <button class="btn btn-reset" id="resetBtn">
+      💳 I Paid Up — Reset Fine
+    </button>
+  </div>
+
+  <!-- ─── Footer ─────────────────────────────────── -->
+  <footer>
+    <span>SocialFine v1.2.6 · No PII stored</span>
+  </footer>
+
+  <script src="lib/qrcode.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
