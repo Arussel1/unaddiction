@@ -16,8 +16,6 @@ const violationCount   = $("#violationCount");
 const totalFineEl      = $("#totalFine");
 const allowanceDisplay = $("#allowanceDisplay");
 const lastViolationEl  = $("#lastViolation");
-const deviceIdEl       = $("#deviceId");
-const copyBtn          = $("#copyBtn");
 const resetBtn         = $("#resetBtn");
 const saveAllowance    = $("#saveAllowance");
 const allowanceInput   = $("#allowanceInput");
@@ -30,9 +28,6 @@ const addDomainBtn     = $("#addDomainBtn");
 const saveFreeMinutes  = $("#saveFreeMinutes");
 const freeMinutesInput = $("#freeMinutesInput");
 
-// ── Constants ────────────────────────────────────────────
-// REPLACE with your actual dashboard URL when hosted
-const DASHBOARD_BASE_URL = "https://socialfine.web.app/view/";
 
 // ── Month label ──────────────────────────────────────────
 function setMonthLabel() {
@@ -74,12 +69,6 @@ function render(data) {
     lastViolationEl.textContent = "No violations yet 🎉";
   }
 
-  // Device ID
-  if (data.deviceId) {
-    deviceIdEl.textContent = data.deviceId;
-    renderQR(data.deviceId);
-  }
-
   // Settings placeholders
   allowanceInput.placeholder = String(allowance);
 
@@ -110,34 +99,6 @@ function renderTimeTracker(tt) {
   freeMinutesInput.placeholder = String(tt.dailyFreeMinutes);
 }
 
-// ── QR Code ──────────────────────────────────────────────
-let qrInstance = null;
-function renderQR(deviceId) {
-  if (typeof QRCode === "undefined") return;
-  const url = DASHBOARD_BASE_URL + deviceId;
-  const container = document.getElementById("qrContainer");
-
-  // Replace canvas with a div for qrcodejs
-  const qrEl = document.createElement("div");
-  qrEl.id = "qrTarget";
-
-  // Remove any previous QR
-  const old = document.getElementById("qrTarget");
-  if (old) old.remove();
-  const canvas = document.getElementById("qrCanvas");
-  if (canvas) canvas.style.display = "none";
-
-  container.insertBefore(qrEl, container.firstChild);
-
-  qrInstance = new QRCode(qrEl, {
-    text: url,
-    width: 120,
-    height: 120,
-    colorDark: "#667eea",
-    colorLight: "#0d0d1a",
-    correctLevel: QRCode.CorrectLevel.M
-  });
-}
 
 // ── Blacklist renderer ───────────────────────────────────
 function renderBlacklist(domains) {
@@ -191,14 +152,6 @@ setMonthLabel();
 
 chrome.runtime.sendMessage({ type: "GET_STATUS" }, (response) => {
   if (response) render(response);
-});
-
-// ── Copy Device ID ───────────────────────────────────────
-copyBtn.addEventListener("click", () => {
-  const id = deviceIdEl.textContent;
-  if (id && id !== "—") {
-    navigator.clipboard.writeText(id).then(() => showToast("Copied!"));
-  }
 });
 
 // ── Reset Fine ───────────────────────────────────────────

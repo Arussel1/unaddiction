@@ -14,7 +14,6 @@ if (typeof globalThis.chrome === "undefined" && typeof globalThis.browser !== "u
   globalThis.chrome = globalThis.browser;
 }
 
-import FIREBASE_CONFIG from "./firebase-config.js";
 
 // ── Defaults ─────────────────────────────────────────────
 const DEFAULT_BLACKLIST = [
@@ -31,67 +30,7 @@ const FINE_AMOUNT             = 1;   // $1 CAD per violation
 const DEFAULT_DAILY_FREE_MINS = 5;   // 5 min free browsing per day
 const RULE_ID_OFFSET          = 1000; // dynamic rule IDs start here
 
-// ═══════════════════════════════════════════════════════════
-//  FIRESTORE REST HELPERS
-// ═══════════════════════════════════════════════════════════
 
-const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents`;
-
-async function firestoreGet(deviceId) {
-  try {
-    const res = await fetch(`${FIRESTORE_BASE}/debts/${deviceId}?key=${FIREBASE_CONFIG.apiKey}`);
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Firestore GET ${res.status}`);
-    const data = parseFirestoreDoc(await res.json());
-    console.log(`[SocialFine] Firestore success: data retrieved for ${deviceId}`);
-    return data;
-  } catch (err) {
-    console.error("[SocialFine] Firestore GET failed:", err);
-    return null;
-  }
-}
-
-async function firestoreSet(deviceId, data) {
-  try {
-    const res = await fetch(
-      `${FIRESTORE_BASE}/debts/${deviceId}?key=${FIREBASE_CONFIG.apiKey}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildFirestoreDoc(data))
-      }
-    );
-    if (!res.ok) throw new Error(`Firestore PATCH ${res.status}`);
-    console.log(`[SocialFine] Firestore success: debt synced for ${deviceId}`);
-    return true;
-  } catch (err) {
-    console.error("[SocialFine] Firestore SET failed:", err);
-    return false;
-  }
-}
-
-function parseFirestoreDoc(doc) {
-  const f = doc.fields || {};
-  return {
-    totalFine:        Number(f.totalFine?.integerValue        ?? f.totalFine?.doubleValue        ?? 0),
-    violationCount:   Number(f.violationCount?.integerValue   ?? f.violationCount?.doubleValue   ?? 0),
-    monthlyAllowance: Number(f.monthlyAllowance?.integerValue ?? f.monthlyAllowance?.doubleValue ?? DEFAULT_ALLOWANCE),
-    lastViolation:    f.lastViolation?.timestampValue          ?? null,
-    lastResetMonth:   f.lastResetMonth?.stringValue            ?? null
-  };
-}
-
-function buildFirestoreDoc(data) {
-  return {
-    fields: {
-      totalFine:        { integerValue: String(data.totalFine) },
-      violationCount:   { integerValue: String(data.violationCount) },
-      monthlyAllowance: { integerValue: String(data.monthlyAllowance) },
-      lastViolation:    { timestampValue: data.lastViolation },
-      lastResetMonth:   { stringValue: data.lastResetMonth }
-    }
-  };
-}
 
 // ═══════════════════════════════════════════════════════════
 //  HELPERS
@@ -108,17 +47,6 @@ function currentDayKey() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  DEVICE ID
-// ═══════════════════════════════════════════════════════════
-
-async function getOrCreateDeviceId() {
-  const result = await chrome.storage.local.get("deviceId");
-  if (result.deviceId) return result.deviceId;
-  const id = crypto.randomUUID();
-  await chrome.storage.local.set({ deviceId: id });
-  return id;
-}
-
 // ═══════════════════════════════════════════════════════════
 //  BLACKLIST MANAGEMENT (Dynamic Rules)
 // ═══════════════════════════════════════════════════════════
@@ -169,12 +97,7 @@ async function syncDynamicRules(domains, forceEnable = false) {
 //  DEBT RECORD
 // ═══════════════════════════════════════════════════════════
 
-async function getDebtRecord(deviceId) {
-  const cloud = await firestoreGet(deviceId);
-  if (cloud) {
-    await chrome.storage.local.set({ debt: cloud });
-    return cloud;
-  }
+async function getDebtRecord() {
   const local = await chrome.storage.local.get("debt");
   if (local.debt) return local.debt;
 
@@ -284,8 +207,7 @@ async function stopTrackingTab() {
 // ═══════════════════════════════════════════════════════════
 
 async function recordViolation() {
-  const deviceId = await getOrCreateDeviceId();
-  let record = await getDebtRecord(deviceId);
+  let record = await getDebtRecord();
   record = maybeResetForNewMonth(record);
 
   record.totalFine += FINE_AMOUNT;
@@ -293,25 +215,7 @@ async function recordViolation() {
   record.lastViolation = new Date().toISOString();
 
   await chrome.storage.local.set({ debt: record });
-
-  const synced = await firestoreSet(deviceId, record);
-  if (!synced) {
-    await chrome.storage.local.set({ pendingSync: true });
-  }
   return record;
-}
-
-async function retrySync() {
-  const { pendingSync } = await chrome.storage.local.get("pendingSync");
-  if (!pendingSync) return;
-  const deviceId = await getOrCreateDeviceId();
-  const { debt } = await chrome.storage.local.get("debt");
-  if (!debt) return;
-  const synced = await firestoreSet(deviceId, debt);
-  if (synced) {
-    await chrome.storage.local.remove("pendingSync");
-    console.log("[SocialFine] Pending sync completed.");
-  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -380,12 +284,11 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
 // ═══════════════════════════════════════════════════════════
 
 chrome.runtime.onInstalled.addListener(async () => {
-  const deviceId = await getOrCreateDeviceId();
-  console.log(`[SocialFine] Installed. Device ID: ${deviceId}`);
+  console.log(`[SocialFine] Installed.`);
 
-  // Initialise cloud record if new
-  const existing = await firestoreGet(deviceId);
-  if (!existing) {
+  // Initialise local record if new
+  const local = await chrome.storage.local.get("debt");
+  if (!local.debt) {
     const fresh = {
       totalFine: 0,
       violationCount: 0,
@@ -393,7 +296,6 @@ chrome.runtime.onInstalled.addListener(async () => {
       lastViolation: new Date().toISOString(),
       lastResetMonth: currentMonthKey()
     };
-    await firestoreSet(deviceId, fresh);
     await chrome.storage.local.set({ debt: fresh });
   }
 
@@ -403,12 +305,9 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 chrome.runtime.onStartup.addListener(async () => {
-  const deviceId = await getOrCreateDeviceId();
-  let record = await getDebtRecord(deviceId);
+  let record = await getDebtRecord();
   record = maybeResetForNewMonth(record);
   await chrome.storage.local.set({ debt: record });
-  await firestoreSet(deviceId, record);
-  await retrySync();
 
   // Re-sync dynamic rules
   const blacklist = await getBlacklist();
@@ -419,11 +318,9 @@ chrome.runtime.onStartup.addListener(async () => {
 //  ALARMS
 // ═══════════════════════════════════════════════════════════
 
-chrome.alarms.create("syncRetry", { periodInMinutes: 5 });
 chrome.alarms.create("timeTick", { periodInMinutes: 0.25 }); // 15s ticks
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === "syncRetry") await retrySync();
   if (alarm.name === "timeTick")  await tickTimeTracker();
 });
 
@@ -436,13 +333,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // ── Get full status ────────────────────────────
   if (message.type === "GET_STATUS") {
     (async () => {
-      const deviceId = await getOrCreateDeviceId();
-      let record = await getDebtRecord(deviceId);
+      let record = await getDebtRecord();
       record = maybeResetForNewMonth(record);
       const tt = await getTimeTracking();
       const blacklist = await getBlacklist();
       sendResponse({
-        deviceId,
         ...record,
         timeTracking: tt,
         blacklist
@@ -463,13 +358,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // ── Reset fine ─────────────────────────────────
   if (message.type === "RESET_FINE") {
     (async () => {
-      const deviceId = await getOrCreateDeviceId();
-      let record = await getDebtRecord(deviceId);
+      let record = await getDebtRecord();
       record.totalFine = 0;
       record.violationCount = 0;
       record.lastViolation = new Date().toISOString();
       await chrome.storage.local.set({ debt: record });
-      await firestoreSet(deviceId, record);
       sendResponse({ success: true, ...record });
     })();
     return true;
@@ -478,11 +371,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // ── Set monthly allowance ──────────────────────
   if (message.type === "SET_ALLOWANCE") {
     (async () => {
-      const deviceId = await getOrCreateDeviceId();
-      let record = await getDebtRecord(deviceId);
+      let record = await getDebtRecord();
       record.monthlyAllowance = Number(message.value) || DEFAULT_ALLOWANCE;
       await chrome.storage.local.set({ debt: record });
-      await firestoreSet(deviceId, record);
       sendResponse({ success: true, ...record });
     })();
     return true;
@@ -546,8 +437,6 @@ export {
   currentMonthKey,
   currentDayKey,
   isFreeTimeExhausted,
-  parseFirestoreDoc,
-  buildFirestoreDoc,
   DEFAULT_ALLOWANCE,
   DEFAULT_DAILY_FREE_MINS,
   FINE_AMOUNT

@@ -23,9 +23,7 @@
     "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "https://*.firebaseio.com/*",
-    "https://*.googleapis.com/*"
+    "<all_urls>"
   ],
   "background": {
     "scripts": ["background.js"],
